@@ -1,0 +1,36 @@
+<div class="min-h-screen bg-slate-100 text-slate-900">
+  <!-- Top bar -->
+  <header class="bg-white shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold text-emerald-600">
+        Gestion des Dons & Événements
+      </h1>
+
+      <nav class="flex gap-4 text-sm font-medium">
+        <a
+          routerLink="/donations"
+          routerLinkActive="text-emerald-600 border-b-2 border-emerald-600"
+          class="pb-1 hover:text-emerald-500 transition"
+          >Donations</a
+        >
+        <a
+          routerLink="/associations"
+          routerLinkActive="text-emerald-600 border-b-2 border-emerald-600"
+          class="pb-1 hover:text-emerald-500 transition"
+          >Associations</a
+        >
+        <a
+          routerLink="/events/1"
+          routerLinkActive="text-emerald-600 border-b-2 border-emerald-600"
+          class="pb-1 hover:text-emerald-500 transition"
+          >Stats</a
+        >
+      </nav>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <router-outlet></router-outlet>
+  </main>
+</div>

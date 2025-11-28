@@ -1,0 +1,177 @@
+<div class="grid gap-6">
+  <!-- Create Association Form -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-xl font-semibold mb-4 text-slate-800">
+      Nouvelle association
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">Nom</label>
+        <input
+          type="text"
+          [(ngModel)]="newAssociation.name"
+          name="name"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Banque Alimentaire Tunis"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1"
+          >Ville</label
+        >
+        <input
+          type="text"
+          [(ngModel)]="newAssociation.city"
+          name="city"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Tunis"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1"
+          >Adresse</label
+        >
+        <input
+          type="text"
+          [(ngModel)]="newAssociation.address"
+          name="address"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Rue X, Centre-ville"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1"
+          >Zone</label
+        >
+        <input
+          type="text"
+          [(ngModel)]="newAssociation.zone"
+          name="zone"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Centre / Nord / Sud..."
+        />
+      </div>
+
+      <!-- Location text + map -->
+      <div class="md:col-span-2 space-y-2">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">
+            Localisation (coordonnées sélectionnées)
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="newAssociation.location"
+            name="location"
+            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Cliquez sur la carte pour remplir automatiquement"
+            readonly
+          />
+          <p class="mt-1 text-[11px] text-slate-500">
+            Cliquez sur la carte ci-dessous pour choisir la position exacte de
+            l’association. Les coordonnées seront enregistrées sous forme
+            <code>lat, lng</code>.
+          </p>
+        </div>
+
+        <!-- Map container -->
+        <div
+          id="association-map"
+          class="w-full h-64 rounded-xl border border-slate-200 overflow-hidden"
+        ></div>
+      </div>
+    </div>
+
+    <button
+      (click)="createAssociation()"
+      class="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+      [disabled]="!newAssociation.name"
+    >
+      + Ajouter l’association
+    </button>
+  </div>
+
+  <!-- Associations list -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold text-slate-800">Associations</h2>
+      <div *ngIf="loading" class="text-xs text-slate-500">Chargement...</div>
+    </div>
+
+    <div *ngIf="error" class="mb-3 text-sm text-red-600">
+      {{ error }}
+    </div>
+
+    <div
+      *ngIf="associations.length === 0 && !loading"
+      class="text-sm text-slate-500"
+    >
+      Aucune association pour le moment.
+    </div>
+
+    <table
+      *ngIf="associations.length > 0"
+      class="w-full text-sm border-separate border-spacing-y-2"
+    >
+      <thead>
+        <tr class="text-left text-xs text-slate-500">
+          <th class="px-3 py-1">Nom</th>
+          <th class="px-3 py-1">Ville</th>
+          <th class="px-3 py-1">Zone</th>
+          <th class="px-3 py-1">Active</th>
+          <th class="px-3 py-1">Carte</th>
+          <th class="px-3 py-1">Actions</th>
+          <!-- 👈 NEW -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let a of associations"
+          class="bg-slate-50 hover:bg-slate-100 transition"
+        >
+          <td class="px-3 py-2 font-medium text-slate-800">
+            {{ a.name }}
+          </td>
+          <td class="px-3 py-2 text-slate-600">
+            {{ a.city }}
+          </td>
+          <td class="px-3 py-2 text-slate-600">
+            {{ a.zone }}
+          </td>
+          <td class="px-3 py-2">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+              [ngClass]="
+                a.active
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-slate-200 text-slate-600'
+              "
+            >
+              ● {{ a.active ? "Active" : "Inactive" }}
+            </span>
+          </td>
+          <td class="px-3 py-2">
+            <button
+              type="button"
+              (click)="openOnMap(a)"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-300 text-xs text-slate-700 hover:bg-slate-100 transition"
+            >
+              Ouvrir la carte
+            </button>
+          </td>
+          <td class="px-3 py-2">
+            <a
+              [routerLink]="['/associations', a.id]"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-medium hover:bg-slate-900 transition"
+            >
+              Détails
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

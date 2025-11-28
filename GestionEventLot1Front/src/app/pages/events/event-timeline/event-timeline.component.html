@@ -1,0 +1,202 @@
+<div class="max-w-6xl mx-auto mt-6 space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-slate-800">
+      Dashboard des événements & statistiques
+    </h1>
+    <span class="text-xs text-slate-500">
+      Basé sur les dons, associations et besoins
+    </span>
+  </div>
+
+  <!-- Loading / error -->
+  <div *ngIf="loading" class="text-sm text-slate-500">
+    Chargement des statistiques...
+  </div>
+  <div *ngIf="error" class="text-sm text-red-600">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <!-- === TOP KPIs === -->
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <div class="text-xs text-slate-500 mb-1">Nombre total de dons</div>
+        <div class="text-2xl font-semibold text-slate-800">
+          {{ totalDonations }}
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <div class="text-xs text-slate-500 mb-1">Quantité totale donnée</div>
+        <div class="text-2xl font-semibold text-slate-800">
+          {{ totalQuantity | number : "1.0-0" }}
+          <span class="text-xs text-slate-500">unités</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <div class="text-xs text-slate-500 mb-1">Valeur estimée des dons</div>
+        <div class="text-2xl font-semibold text-slate-800">
+          {{ totalEstimatedValue | number : "1.0-0" }}
+          <span class="text-xs text-slate-500">DT</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <div class="text-xs text-slate-500 mb-1">Taux de dons livrés</div>
+        <div class="text-2xl font-semibold text-slate-800">
+          {{ deliveredRate | number : "1.0-0" }}%
+        </div>
+        <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-emerald-500"
+            [style.width.%]="deliveredRate"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === DONATIONS BY STATUS & CATEGORY === -->
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- Status -->
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="text-sm font-semibold text-slate-800 mb-3">
+          Répartition des dons par statut
+        </h2>
+
+        <div *ngIf="statusStats.length === 0" class="text-xs text-slate-500">
+          Aucun don enregistré.
+        </div>
+
+        <div
+          *ngFor="let s of statusStats"
+          class="flex items-center justify-between mb-2 last:mb-0"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px]"
+              [ngClass]="{
+                'bg-slate-100 text-slate-700':
+                  s.status === DonationStatus.CREATED,
+                'bg-amber-100 text-amber-700':
+                  s.status === DonationStatus.MATCHED,
+                'bg-blue-100 text-blue-700':
+                  s.status === DonationStatus.IN_TRANSIT,
+                'bg-emerald-100 text-emerald-700':
+                  s.status === DonationStatus.DELIVERED,
+                'bg-red-100 text-red-700': s.status === DonationStatus.CANCELLED
+              }"
+            >
+              ●
+            </span>
+            <span class="text-xs text-slate-700">
+              {{ s.status }}
+            </span>
+          </div>
+
+          <div
+            class="flex-1 mx-3 h-1.5 bg-slate-100 rounded-full overflow-hidden"
+          >
+            <div
+              class="h-full bg-slate-400"
+              [style.width.%]="(s.count / maxStatusCount()) * 100"
+            ></div>
+          </div>
+
+          <div class="text-xs text-slate-500 w-8 text-right">
+            {{ s.count }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="text-sm font-semibold text-slate-800 mb-3">
+          Répartition par catégorie de produits
+        </h2>
+
+        <div *ngIf="categoryStats.length === 0" class="text-xs text-slate-500">
+          Aucun don enregistré.
+        </div>
+
+        <div *ngFor="let c of categoryStats" class="mb-2 last:mb-0">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-slate-700">
+              {{ c.category }}
+            </span>
+            <span class="text-[11px] text-slate-500">
+              {{ c.quantity | number : "1.0-0" }} unités
+            </span>
+          </div>
+          <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-emerald-500"
+              [style.width.%]="(c.quantity / maxCategoryQuantity()) * 100"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === ASSOCIATIONS BY ZONE === -->
+    <div class="bg-white rounded-xl shadow-sm p-4">
+      <h2 class="text-sm font-semibold text-slate-800 mb-3">
+        Associations par zone géographique
+      </h2>
+
+      <div *ngIf="zoneStats.length === 0" class="text-xs text-slate-500">
+        Aucune association enregistrée.
+      </div>
+
+      <div
+        *ngFor="let z of zoneStats"
+        class="flex items-center justify-between mb-2 last:mb-0"
+      >
+        <span class="text-xs text-slate-700">{{ z.zone }}</span>
+        <div
+          class="flex-1 mx-3 h-1.5 bg-slate-100 rounded-full overflow-hidden"
+        >
+          <div
+            class="h-full bg-blue-500"
+            [style.width.%]="(z.count / maxZoneCount()) * 100"
+          ></div>
+        </div>
+        <span class="text-xs text-slate-500 w-8 text-right">
+          {{ z.count }}
+        </span>
+      </div>
+    </div>
+
+    <!-- === COVERAGE: DONATIONS vs NEEDS === -->
+    <div class="bg-white rounded-xl shadow-sm p-4">
+      <h2 class="text-sm font-semibold text-slate-800 mb-3">
+        Couverture des besoins par catégorie
+      </h2>
+
+      <div
+        *ngIf="coverageByCategory.length === 0"
+        class="text-xs text-slate-500"
+      >
+        Aucun besoin d’association enregistré.
+      </div>
+
+      <div *ngFor="let c of coverageByCategory" class="mb-3 last:mb-0">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs text-slate-700">
+            {{ c.category }}
+          </span>
+          <span class="text-[11px] text-slate-500">
+            {{ c.donated | number : "1.0-0" }}/{{
+              c.needed | number : "1.0-0"
+            }}
+            unités ({{ c.coverage | number : "1.0-0" }}%)
+          </span>
+        </div>
+        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full bg-emerald-500" [style.width.%]="c.coverage"></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

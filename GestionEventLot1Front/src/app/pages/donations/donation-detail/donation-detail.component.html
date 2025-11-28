@@ -1,0 +1,172 @@
+<div class="max-w-4xl mx-auto mt-6 bg-white rounded-2xl shadow-sm p-6">
+  <button
+    type="button"
+    (click)="goBack()"
+    class="mb-4 text-xs text-slate-500 hover:text-slate-800"
+  >
+    ← Retour à la liste des dons
+  </button>
+
+  <div *ngIf="loading" class="text-sm text-slate-500">Chargement...</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <ng-container *ngIf="donation && !loading">
+    <h2 class="text-2xl font-semibold text-slate-800 mb-1">
+      Don {{ donation.reference }}
+    </h2>
+    <p class="text-xs text-slate-500 mb-4">
+      {{ getLocationLabel() }}
+    </p>
+
+    <!-- Info en haut -->
+    <div class="grid md:grid-cols-3 gap-4 mb-6 text-xs text-slate-600">
+      <div>
+        <div class="font-semibold text-slate-700 mb-1">Commerçant</div>
+        <div>{{ donation.merchantName }}</div>
+        <div class="text-[11px]">{{ donation.merchantAddress }}</div>
+      </div>
+      <div>
+        <div class="font-semibold text-slate-700 mb-1">Association</div>
+        <div *ngIf="donation.associationName; else noAssoc">
+          {{ donation.associationName }}
+        </div>
+        <div class="text-[11px]" *ngIf="donation.associationAddress">
+          {{ donation.associationAddress }}
+        </div>
+        <ng-template #noAssoc>
+          <div class="text-[11px] italic text-slate-400">
+            Pas encore affectée
+          </div>
+        </ng-template>
+      </div>
+      <div>
+        <div class="font-semibold text-slate-700 mb-1">Détails</div>
+        <div>
+          {{ donation.totalQuantity }} {{ donation.quantityUnit }} -
+          {{ donation.category }}
+        </div>
+        <div class="text-[11px]">
+          Valeur estimée : {{ donation.estimatedValue }} DT
+        </div>
+        <div class="text-[11px] mt-1">
+          Statut :
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ml-1"
+            [ngClass]="{
+              'bg-slate-100 text-slate-700':
+                donation.status === DonationStatus.CREATED,
+              'bg-amber-100 text-amber-700':
+                donation.status === DonationStatus.MATCHED,
+              'bg-blue-100 text-blue-700':
+                donation.status === DonationStatus.IN_TRANSIT,
+              'bg-emerald-100 text-emerald-700':
+                donation.status === DonationStatus.DELIVERED,
+              'bg-red-100 text-red-700':
+                donation.status === DonationStatus.CANCELLED
+            }"
+          >
+            ● {{ donation.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Zone Traçabilité ===== -->
+    <h3 class="text-lg font-semibold text-slate-800 mb-3">Traçabilité</h3>
+
+    <!-- Ligne pointillée + icônes -->
+    <div class="relative w-full h-44 mb-4">
+      <!-- Ligne pointillée -->
+      <img
+        src="assets/trace-line.png"
+        alt="Chemin du don"
+        class="w-full h-full object-contain opacity-70"
+      />
+
+      <!-- Icône commerçant (emoji) -->
+      <div class="absolute left-0 bottom-4 flex flex-col items-center">
+        <div
+          class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white text-xl"
+        >
+          🏪
+        </div>
+        <span class="mt-1 text-[10px] text-slate-600"> Commerçant </span>
+      </div>
+
+      <!-- Icône voiture (emoji) -->
+      <div
+        class="absolute bottom-10 -translate-x-1/2 flex flex-col items-center transition-all duration-500"
+        [ngStyle]="{ left: getCarLeftPercent() }"
+        *ngIf="donation.status !== DonationStatus.CANCELLED"
+      >
+        <div
+          class="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center text-2xl drop-shadow"
+        >
+          🚚
+        </div>
+      </div>
+
+      <!-- Icône maison / association (emoji) -->
+      <div class="absolute right-0 top-4 flex flex-col items-center">
+        <div
+          class="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center text-2xl"
+          [class.opacity-30]="!isDelivered()"
+        >
+          🏠
+        </div>
+        <span class="mt-1 text-[10px] text-slate-600"> Association </span>
+      </div>
+    </div>
+
+    <!-- Étapes -->
+    <div class="mt-2 grid grid-cols-4 text-[11px] text-center text-slate-600">
+      <div>
+        <div
+          class="w-2 h-2 mx-auto rounded-full"
+          [ngClass]="{
+            'bg-emerald-500': getTraceStep() >= 0,
+            'bg-slate-300': getTraceStep() < 0
+          }"
+        ></div>
+        <p class="mt-1">Créé</p>
+      </div>
+      <div>
+        <div
+          class="w-2 h-2 mx-auto rounded-full"
+          [ngClass]="{
+            'bg-emerald-500': getTraceStep() >= 1,
+            'bg-slate-300': getTraceStep() < 1
+          }"
+        ></div>
+        <p class="mt-1">Association trouvée</p>
+      </div>
+      <div>
+        <div
+          class="w-2 h-2 mx-auto rounded-full"
+          [ngClass]="{
+            'bg-emerald-500': getTraceStep() >= 2,
+            'bg-slate-300': getTraceStep() < 2
+          }"
+        ></div>
+        <p class="mt-1">En transit</p>
+      </div>
+      <div>
+        <div
+          class="w-2 h-2 mx-auto rounded-full"
+          [ngClass]="{
+            'bg-emerald-500': getTraceStep() >= 3,
+            'bg-slate-300': getTraceStep() < 3
+          }"
+        ></div>
+        <p class="mt-1">Livré</p>
+      </div>
+    </div>
+
+    <div
+      *ngIf="donation.status === DonationStatus.CANCELLED"
+      class="mt-4 text-xs text-red-600"
+    >
+      Ce don a été annulé.
+    </div>
+  </ng-container>
+</div>
